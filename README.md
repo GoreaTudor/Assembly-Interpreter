@@ -3,6 +3,18 @@ I'm trying to make my own assembly interpreter with a few commands
 
 .
 
+%adr - Value from the address adr (variable)
+
+&adr - Value from the address that is contained in adr (pointer)
+
+value - A numeric value (a number)
+
+A - The Accumulator (main register)
+
+line - where to jump in a (un)conditional jump
+
+.
+
 Arithmetic Operators:
 
  - ADD  %adr / &adr / value
@@ -27,9 +39,9 @@ Logic Operators:
 
 Bit Operators:
 
- - SHL %adr / &adr / A
+ - SHL  %adr / &adr / A
 
- - SHR %adr / &adr / A
+ - SHR  %adr / &adr / A
 
 .
 
@@ -37,7 +49,7 @@ Memory Operators:
 
  - STORE  %adr / &adr
 
- - LOAD  %adr / &adr / value
+ - LOAD   %adr / &adr / value
 
 .
 
