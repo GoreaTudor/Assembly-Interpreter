@@ -21,9 +21,9 @@ Arithmetic Operators:
 
  - SUB  %adr / &adr / value 			
 
- - INC  %adr / &adr / value / A
+ - INC  %adr / &adr / A
 
- - DEC  %adr / &adr / value / A
+ - DEC  %adr / &adr / A
 
 .
 
