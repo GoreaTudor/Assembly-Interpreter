@@ -1,6 +1,5 @@
 # Assembly-Interpreter
 I'm trying to make my own assembly interpreter with a few commands
-.
 
 .
 
@@ -13,7 +12,6 @@ Arithmetic Operators:
  - INC  %adr / &adr / value / A
 
  - DEC  %adr / &adr / value / A
-.
 
 .
 
@@ -29,35 +27,36 @@ Logic Operators:
 
 Bit Operators:
 
- - SHL 
+ - SHL %adr / &adr / A
 
- - SHR 
+ - SHR %adr / &adr / A
 
 .
 
 Memory Operators:
 
- - SET    
+ - STORE  %adr / &adr
 
- - LOAD   $adr/nr
+ - LOAD  %adr / &adr / value
 
- - STORE  $adr			
+.
 
 Jumpers:
 
- - JMP  
+ - JMP  line
 
- - JZ   
+ - JZ   line
 
- - JNZ  
+ - JNZ  line
 
- - JLZ
+ - JLZ  line
 
- - JMZ
+ - JMZ  line
 
- - JC
+ - JC   line
 
- - JNC
+ - JNC  line
 
+.
 
-HLT
+ - HLT
