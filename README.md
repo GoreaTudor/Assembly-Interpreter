@@ -33,7 +33,7 @@ Logic Operators:
 
  - OR   %adr / &adr / value
 
- - NOT  %adr / &adr / value
+ - NOT  %adr / &adr / value / A
 
 .
 
