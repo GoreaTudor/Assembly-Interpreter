@@ -27,7 +27,6 @@ size_t CarryLine; //The number of the line that set the carry flag
 
 
 
-
 /////////////////////////////////////////////////////////////////////////////////////////////////// METHOD NAMES
 
 
@@ -40,6 +39,15 @@ bool Read(char* filename);
 
 // Displays the values of the registers
 void Display();
+
+//Finds the digits from the string and forms a number with the digits in order
+//Ex 1: "1234" --> 1234
+//Ex 2: "1f2g3h6" --> 1236
+//Ex 3: "%256" --> 256
+int StringToNumber(char* s);
+
+//Checks if the operand is valid (the second word)
+bool Valid(char* s);
 
 // Runs the code in Normal Mode / Debug Mode
 bool Run();
@@ -104,10 +112,6 @@ int main(int argc, char* argv[]){
 
 
 
-//Finds the digits from the string and forms a number with the digits in order
-//Ex 1: "1234" --> 1234
-//Ex 2: "1f2g3h6" --> 1236
-//Ex 3: "%256" --> 256
 int StringToNumber(char* s){
     int i, nr = 0;
     char ch;
@@ -122,6 +126,39 @@ int StringToNumber(char* s){
     }
 
     return nr;
+}
+
+
+bool Valid(char* s){
+    if(s == NULL) //An empty operand is not valid
+        return false;
+
+
+    // Syntax
+    if(strcmp(s, "A") == 0) //A is the accumulator
+        return true;
+
+    if(s[0] != '%' and s[0] != '&' and (s[0] < '0' or s[0] > '9')) //the first caracter should be '%' or '&' or a digit
+        return false;
+    
+    for(int i=1; i<strlen(s); i++){ //all the other characters should be digits
+        if(s[i] < '0' or s[i] > '9')
+            return false;
+    }
+
+
+    // Logic
+    int operand = StringToNumber(s);
+    
+    if(s[0] == '&' and (operand >= numberOfRegisters or reg[operand] >= numberOfRegisters)) // pointer that exits the allocated memory
+        return false;
+
+    if(s[0] == '%' and operand >= numberOfRegisters) // variable that exits the allocated memory
+        return false;
+
+
+    // The operand is valid
+    return true;
 }
 
 
@@ -220,64 +257,155 @@ void Display(){
         if(i % 5 == 4)
             cout << "\n";
     }
+    cout << "\nAccumulator Value: " << A << "\n";
 }
 
 
 bool Run(){
     cout << "Running...";
     CurrentIndex = 0;
+    int operand;
 
     while(true){
         if(debugMode)
             cout << "\n\nCurrent command: " << code[CurrentIndex][0] << " " << code[CurrentIndex][1];
 
+        if(strcmp(code[CurrentIndex][0], "HLT") != 0 and !Valid(code[CurrentIndex][1])){ //The operand is not valid, HLT does not have an operand
+            cout << "\nSyntax Error: " << code[CurrentIndex][1] << " is not a valid operand";
+            return false;
+        }
+
+        operand = StringToNumber(code[CurrentIndex][1]); // making the operand easier to use
+        //cout << "\nOperand: " << operand;
+
 /////////////////////////////////////////////////////////////////////////////// ARITHMETIC OPERATORS
         if( strcmp(code[CurrentIndex][0], "ADD") == 0 ){           // ADD
-            ;
+            if(code[CurrentIndex][1][0] == '&'){ //pointer
+                A += reg[ reg[ operand ] ];
+
+            } else if(code[CurrentIndex][1][0] == '%'){ //variable
+                A += reg[ operand ];
+
+            } else { //numeric value
+                A += operand;
+            }
 
             CurrentIndex ++;
 
         } else if( strcmp(code[CurrentIndex][0], "SUB") == 0 ){    // SUB
-            ;
+            if(code[CurrentIndex][1][0] == '&'){ //pointer
+                A -= reg[ reg[ operand ] ];
+
+            } else if(code[CurrentIndex][1][0] == '%'){ //variable
+                A -= reg[ operand ];
+
+            } else { //numeric value
+                A -= operand;
+            };
 
             CurrentIndex ++;
             
         } else if( strcmp(code[CurrentIndex][0], "INC") == 0 ){    // INC
-            ;
+            if(code[CurrentIndex][1][0] == '&'){ //pointer
+                A = ++ reg[ reg[ operand ] ];
+
+            } else if(code[CurrentIndex][1][0] == '%'){ //variable
+                A = ++ reg[ operand ];
+
+            } else if( strcmp(code[CurrentIndex][1], "A") == 0 ){ //Accumulator
+                A ++;
+            }
 
             CurrentIndex ++;
             
         } else if( strcmp(code[CurrentIndex][0], "DEC") == 0 ){    // DEC
-            ;
+            if(code[CurrentIndex][1][0] == '&'){ //pointer
+                A = -- reg[ reg[ operand ] ];
+
+            } else if(code[CurrentIndex][1][0] == '%'){ //variable
+                A = -- reg[ operand ];
+
+            } else if( strcmp(code[CurrentIndex][1], "A") == 0 ){ //Accumulator
+                A --;
+            }
 
             CurrentIndex ++;
         }
             
 /////////////////////////////////////////////////////////////////////////////// LOGIC OPERATORS
         else if( strcmp(code[CurrentIndex][0], "AND") == 0 ){      // AND
-            ;
+            if(code[CurrentIndex][1][0] == '&'){ //pointer
+                A &= reg[ reg[ operand ] ];
+
+            } else if(code[CurrentIndex][1][0] == '%'){ //variable
+                A &= reg[ operand ];
+
+            } else { //numeric value
+                A &= operand;
+            };
 
             CurrentIndex ++;
             
         } else if( strcmp(code[CurrentIndex][0], "OR") == 0 ){     // OR
-            ;
+            if(code[CurrentIndex][1][0] == '&'){ //pointer
+                A |= reg[ reg[ operand ] ];
+
+            } else if(code[CurrentIndex][1][0] == '%'){ //variable
+                A |= reg[ operand ];
+
+            } else { //numeric value
+                A |= operand;
+            };
 
             CurrentIndex ++;
             
         } else if( strcmp(code[CurrentIndex][0], "NOT") == 0 ){    // NOT
-            ;
+            /*NOT A is the equivalent of -A -1, 
+            because -A = NOT A + 1  
+            (2's complement rule)*/
+
+            if( strcmp(code[CurrentIndex][1], "A") == 0 ){ //Accumulator
+                A = -A -1;
+
+            }else if(code[CurrentIndex][1][0] == '&'){ //pointer
+                A = -reg[ reg[ operand ] ] -1;
+
+            } else if(code[CurrentIndex][1][0] == '%'){ //variable
+                A = -reg[ operand ] -1;
+
+            } else { //numeric value
+                A = -operand -1;
+            }
 
             CurrentIndex ++;
         }
 
 /////////////////////////////////////////////////////////////////////////////// BIT OPERATORS
         else if( strcmp(code[CurrentIndex][0], "SHL") == 0 ){      // SHL
-            ;
+            if( strcmp(code[CurrentIndex][1], "A") == 0 ){ //Accumulator
+                A = A << 1;
+
+            }else if(code[CurrentIndex][1][0] == '&'){ //pointer
+                A = (reg[ reg[ operand ] ]) << 1;
+
+            } else if(code[CurrentIndex][1][0] == '%'){ //variable
+                A = (reg[ operand ]) << 1;
+
+            };
 
             CurrentIndex ++;
             
         } else if( strcmp(code[CurrentIndex][0], "SHR") == 0 ){    // SHR
-            ;
+            if( strcmp(code[CurrentIndex][1], "A") == 0 ){ //Accumulator
+                A = A >> 1;
+
+            }else if(code[CurrentIndex][1][0] == '&'){ //pointer
+                A = (reg[ reg[ operand ] ]) >> 1;
+
+            } else if(code[CurrentIndex][1][0] == '%'){ //variable
+                A = (reg[ operand ]) >> 1;
+
+            };
 
             CurrentIndex ++;
         }
@@ -321,12 +449,26 @@ bool Run(){
 
 /////////////////////////////////////////////////////////////////////////////// MEMORY OPERATORS    
         else if( strcmp(code[CurrentIndex][0], "STORE") == 0 ){    // STORE
-            ;
+            if(code[CurrentIndex][1][0] == '&'){ //pointer
+                reg[ reg[ operand ] ] = A;
+
+            } else if(code[CurrentIndex][1][0] == '%'){ //variable
+                reg[ operand ] = A;
+
+            }
 
             CurrentIndex ++;
             
         } else if( strcmp(code[CurrentIndex][0], "LOAD") == 0 ){   // LOAD
-            ;
+            if(code[CurrentIndex][1][0] == '&'){ //pointer
+                A = reg[ reg[ operand ] ];
+
+            } else if(code[CurrentIndex][1][0] == '%'){ //variable
+                A = reg[ operand ];
+
+            } else { //numeric value
+                A = operand;
+            };
 
             CurrentIndex ++;
         }
@@ -338,7 +480,7 @@ bool Run(){
         }
 
         else{ //Not in the language Error
-            cout << "\nError: " << code[CurrentIndex][0] << " is not in the language";
+            cout << "\nSyntax Error: " << code[CurrentIndex][0] << " is not in the language";
             return false;
         }
 
