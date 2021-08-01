@@ -27,7 +27,98 @@ size_t CarryLine; //The number of the line that set the carry flag
 
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////// METHOD NAMES
+/////////////////////////////////////////////////////////////////////////////////////////////////// CLASSES
+
+
+
+//Simple linked list Node used for Dictionary
+class Node{
+public:
+    char* PK;
+    size_t value;
+    Node* next;
+
+    //Constructor
+    Node(char* PK, size_t value){
+        this->PK = PK;
+        this->value = value;
+        this->next = NULL;
+    }
+
+    //Default constructor
+    Node(){
+        this->PK = NULL;
+        this->value = 0;
+        this->next = NULL;
+    }
+
+    //Displays the node info
+    void display(){
+        cout << "\n" << this << ": " << this->PK << " " << this->value << " " << this->next;
+    }
+};
+
+//Maps a string to a value, this class will be used for Jumpers
+class Dictionary{
+private:
+    Node* head;
+    Node* last;
+
+public:
+    Dictionary(){
+        this->head = NULL;
+        this->last = NULL;
+    }
+
+    bool addToDictionary(char* PK, size_t value){
+        if(this->head == NULL){ //The Dictionary is empty
+            this->head = new Node(PK, value);
+            this->last = this->head;
+            return true;
+
+        } else { //There are some elements in the Dictionary
+            Node* p;
+            for(p = this->head; p != NULL; p = p->next){ //if the key already exists in the Dictionary, the element will not be added
+                if(strcmp(PK, p->PK) == 0)
+                    return false;
+            }
+
+            //if the Primary Key was not found, then add the new node
+            Node* q = new Node(PK, value);
+            this->last->next = q;
+            this->last = q;
+
+            return true;
+        }
+    }
+
+    Node* getNodeByPK(char* PK){
+        if(this->head == NULL) //The Dictionary is empty
+            return NULL;
+
+        for(Node* p = this->head; p != NULL; p = p->next) //Return the node that has the Primary Key equivalent to PK
+            if(strcmp(PK, p->PK) == 0)
+                return p;
+
+        return NULL; //if PK was not found in the list, return NULL
+    }
+
+    void display(){
+        if(this->head == NULL){
+            cout << "\nThe Dictionary is empty.";
+            return;
+        }
+
+        for(Node* p = this->head; p != NULL; p = p->next){
+            p->display();
+        }
+        
+    }
+};
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////// METHOD PROTOTYPES
 
 
 
