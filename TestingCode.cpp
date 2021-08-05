@@ -11,7 +11,11 @@ public:
 
     //Constructor
     Node(char* PK, size_t value){
-        this->PK = PK;
+        this->PK = new char[strlen(PK)];
+        strcpy( this->PK, PK );
+        if(this->PK[ strlen(this->PK) - 1 ] == '\n')
+            this->PK[ strlen(this->PK) - 1 ] = '\0';
+
         this->value = value;
         this->next = NULL;
     }
@@ -152,7 +156,7 @@ bool Read_v2(char* filename){
     ///// Get NUMBER of LINES /////
     while( fgets(readLine, sizeof(readLine), SourceCodeFile) ){
         if(readLine[0] == ':'){
-            cout << "\nET is not implemented yet!";
+            dict->addToDictionary(readLine + 1, numberOfLines);
 
         } else if(lineIsValid(readLine))
             numberOfLines ++;
@@ -198,10 +202,11 @@ bool Read_v2(char* filename){
 
 
     ///// VERIFY the CODE /////
-    // cout << "\n\n";
-    // for(line = 0; line < numberOfLines; line ++){
-    //     cout << line << ": " << code[line][0] << "   " << code[line][1] << endl;
-    // }
+    cout << "\n\n";
+    for(line = 0; line < numberOfLines; line ++){
+        cout << line << ": " << code[line][0] << "   " << code[line][1] << endl;
+    }
+    dict->display();
 
 
     fclose(SourceCodeFile);

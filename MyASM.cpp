@@ -4,29 +4,6 @@
 using namespace std;
 
 
-/////////////////////////////////////////////////////////////////////////////////////////////////// VARIABLES
-
-
-char *reg; //Registers
-size_t numberOfRegisters = 32;
-
-char ***code; //Code (Word Matrix)
-size_t numberOfLines;
-size_t wordsPerLine = 2;
-size_t CurrentIndex; //The index of the MyASM code representing the line
-
-FILE* SourceCodeFile; //The file containing the MyASM code
-//FILE* CustomInputs;
-
-bool debugMode; //True - Debug Mode, False - Normal Mode
-
-char A; //Accumulator
-
-bool CarryFlag; //The carry flag
-size_t CarryLine; //The number of the line that set the carry flag
-
-
-
 /////////////////////////////////////////////////////////////////////////////////////////////////// CLASSES
 
 
@@ -40,7 +17,11 @@ public:
 
     //Constructor
     Node(char* PK, size_t value){
-        this->PK = PK;
+        this->PK = new char[strlen(PK)];
+        strcpy( this->PK, PK );
+        if(this->PK[ strlen(this->PK) - 1 ] == '\n')
+            this->PK[ strlen(this->PK) - 1 ] = '\0';
+
         this->value = value;
         this->next = NULL;
     }
@@ -115,6 +96,30 @@ public:
         
     }
 };
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////// VARIABLES
+
+
+
+Dictionary* dict; //The dictionary object pointer
+FILE* SourceCodeFile; //The file containing the MyASM code
+
+char ***code; //Code (Word Matrix)
+size_t numberOfLines;
+size_t wordsPerLine = 2;
+size_t CurrentIndex; //The index of the MyASM code representing the line
+
+char *reg; //Registers
+size_t numberOfRegisters = 64;
+
+bool debugMode; //True - Debug Mode, False - Normal Mode
+
+char A; //Accumulator
+
+bool CarryFlag; //The carry flag
+size_t CarryLine; //The number of the line that set the carry flag
 
 
 
@@ -288,7 +293,7 @@ bool Read(char* filename){
     ///// Get NUMBER of LINES /////
     while( fgets(readLine, sizeof(readLine), SourceCodeFile) ){
         if(readLine[0] == ':'){
-            cout << "\nET is not implemented yet!";
+            dict->addToDictionary(readLine + 1, numberOfLines);
 
         } else if(lineIsValid(readLine))
             numberOfLines ++;
@@ -366,7 +371,7 @@ bool Run(){
         if(debugMode)
             cout << "\n\nCurrent command: " << code[CurrentIndex][0] << " " << code[CurrentIndex][1];
 
-        if(strcmp(code[CurrentIndex][0], "HLT") != 0 and !Valid(code[CurrentIndex][1])){ //The operand is not valid, HLT does not have an operand
+        if(!Valid(code[CurrentIndex][1])){ //The operand is not valid
             cout << "\nSyntax Error: " << code[CurrentIndex][1] << " is not a valid operand";
             return false;
         }
@@ -607,3 +612,5 @@ void Epilogue(){
     }
     delete[] code;
 }
+
+///// THE END /////
