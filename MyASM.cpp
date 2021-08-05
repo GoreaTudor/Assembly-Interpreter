@@ -125,6 +125,9 @@ public:
 // Converts string to number
 int Str_Nr(char* s);
 
+// Checks if the line is NOT an empty line or a comment line
+bool lineIsValid(char* lineToValidate);
+
 // Reads the MyASM code from the file and saves it into the word matrix
 bool Read(char* filename);
 
@@ -253,90 +256,92 @@ bool Valid(char* s){
 }
 
 
+bool lineIsValid(char* lineToValidate){
+    if(lineToValidate[0] == '\n') //Empty line
+        return false;
+
+    if(lineToValidate[0] == '#') //Comment line
+        return false;
+
+    return true;
+}
+
+
 bool Read(char* filename){
     cout << "Reading...\n";
-    
-    SourceCodeFile = fopen(filename, "r"); //open the called file
-    //SourceCodeFile = fopen("AsmTest.txt", "r"); //for test purpose only
 
-    if(SourceCodeFile){ //The source file was opened
-        char line[255]; //maximum characters per line
-        int i, j; //general purpose iterator
-
-        //Calculating the number of lines
-        while(fgets(line, sizeof(line), SourceCodeFile)){
-            if(line[0] != '\n' and line[0] != '#'){ //eliminating empty lines and comment lines
-                //cout << numberOfLines << ": " << line;
-                numberOfLines ++;
-            }
-        }
-
-        //Rewind the file to read it again
-        rewind(SourceCodeFile);
-
-        //Allocate memory for the lines
-        code = new char**[numberOfLines];
-
-
-        //Read and save the contents of the file
-        i = 0;
-        while(fgets(line, sizeof(line), SourceCodeFile)){
-            if(line[0] != '\n' and line[0] != '#'){ //eliminating empty lines and comment lines
-                char* word;
-                char numberOfWords;
-
-                //Allocate memory for words
-                code[i] = new char*[wordsPerLine]; //number of words per line
-
-                //Allocate memory for each word
-                for(j=0; j<wordsPerLine; j++)
-                    code[i][j] = new char[5]; //5 characters per word
-
-
-                //Save the words in the word matrix
-                numberOfWords = 0;
-                word = strtok(line, " ,");
-
-                while(numberOfWords < 3 and word and word[0] != '#'){
-                    if(word[strlen(word) - 1] == '\n')
-                        word[strlen(word) - 1] = '\0';
-
-                    //cout << word << " " << strlen(word) << endl; // for checking the length of each word
-                    if(strlen(word) > 5) // a word that has more than 5 characters
-                        return false;
-                    
-                    //Allocate memory for each word
-                    // code[i][numberOfWords] = new char[strlen(word)];
-
-                    strcpy(code[i][numberOfWords], word);
-                    //cout << "code[" << i << "][" << (int)numberOfWords << "] = " << code[i][numberOfWords] << endl;
-
-                    numberOfWords ++;
-
-                    //go to the next word
-                    word = strtok(NULL, " ,");
-                }
-
-                i++; //go to the next line
-            }
-        }
-
-        //Verify if the code is properly saved
-        // cout << "\n\n";
-        // for(i=0; i < numberOfLines; i++){
-        //     for(j=0; j<2; j++)
-        //         cout << code[i][j] << "    ";
-        //     cout << endl;
-        // }
-
-
-        fclose(SourceCodeFile); //closing the file 
-        return true;
-
-    } else { //The source file wasn't opened
+    SourceCodeFile = fopen(filename, "r");
+    if(!SourceCodeFile){
         cout << "\nThere was an error on opening the file.";
         return false;
     }
+
+
+    ////////// The FILE is OPENED //////////
+    
+
+    char readLine[100];
+    size_t line, word;
+    char* currentWord;
+
+
+    ///// Get NUMBER of LINES /////
+    while( fgets(readLine, sizeof(readLine), SourceCodeFile) ){
+        if(readLine[0] == ':'){
+            cout << "\nET is not implemented yet!";
+
+        } else if(lineIsValid(readLine))
+            numberOfLines ++;
+    }
+    //cout << "Nr of lines: " << numberOfLines;
+
+
+    rewind(SourceCodeFile);
+
+
+    ///// Allocate Memory /////
+    code = new char**[numberOfLines];
+    for(line = 0; line < numberOfLines; line ++){
+        code[line] = new char*[2];
+
+        code[line][0] = new char[7]; //Operation
+        code[line][1] = new char[7]; //Operand
+    }
+
+
+    ///// SAVE the CODE /////
+    line = 0;
+    while( fgets(readLine, sizeof(readLine), SourceCodeFile) ){
+        if(lineIsValid(readLine) and readLine[0] != ':'){
+            currentWord = strtok(readLine, " "); //Operation
+
+            if(strlen(currentWord) >= 6)
+                return false;
+            strcpy( code[line][0], currentWord );
+            
+
+            currentWord = strtok(NULL, " "); //Operand
+            if(currentWord[strlen(currentWord) - 1] == '\n')
+                currentWord[strlen(currentWord) - 1] = '\0';
+
+            if(currentWord == NULL or strlen(currentWord) >= 6)
+                return false;
+            strcpy( code[line][1], currentWord );
+
+            line ++;
+        }
+    }
+
+
+    ///// VERIFY the CODE /////
+    // cout << "\n\n";
+    // for(line = 0; line < numberOfLines; line ++){
+    //     cout << line << ": " << code[line][0] << "   " << code[line][1] << endl;
+    // }
+
+
+    fclose(SourceCodeFile);
+    return true;
 }
 
 
@@ -348,7 +353,7 @@ void Display(){
         if(i % 5 == 4)
             cout << "\n";
     }
-    cout << "\nAccumulator Value: " << A << "\n";
+    cout << "\nAccumulator Value: " << (int)A << "\n";
 }
 
 
@@ -594,10 +599,11 @@ bool Run(){
 void Epilogue(){
     delete[] reg;
 
-    for(int i=0; i<numberOfLines; i++){
-        // for(int j=0; j<2; j++)
-        //     delete[] code[i][j]; //Segmentation fault? WHY???
-        delete[] code[i];
+    for(int line=0; line<numberOfLines; line ++){
+        delete[] code[line][0];
+        delete[] code[line][1];
+
+        delete[] code[line];
     }
     delete[] code;
 }
