@@ -148,6 +148,9 @@ int StringToNumber(char* s);
 //Checks if the operand is valid (the second word)
 bool Valid(char* s);
 
+//Verify if the command is a jumper
+bool isJumper(char* s);
+
 // Runs the code in Normal Mode / Debug Mode
 bool Run();
 
@@ -168,7 +171,7 @@ int main(int argc, char* argv[]){
     cin >> filename;
     
     if(Read(filename)){
-        //cout << "Read.\n";
+        //dict = new Dictionary();
 
         reg = new char[numberOfRegisters]; //32 bytes allocated for the registers
         for(int i=0; i<numberOfRegisters; i++) //Initializing the register values
@@ -261,6 +264,20 @@ bool Valid(char* s){
 }
 
 
+bool isJumper(char* s){
+    if( strcmp(s, "JMP") == 0 or
+        strcmp(s, "JZ")  == 0 or
+        strcmp(s, "JNZ") == 0 or
+        strcmp(s, "JLZ") == 0 or
+        strcmp(s, "JMZ") == 0 or
+        strcmp(s, "JC")  == 0 or
+        strcmp(s, "JNC") == 0 )
+            return true;
+
+    return false;
+}
+
+
 bool lineIsValid(char* lineToValidate){
     if(lineToValidate[0] == '\n') //Empty line
         return false;
@@ -289,11 +306,14 @@ bool Read(char* filename){
     size_t line, word;
     char* currentWord;
 
+    dict = new Dictionary();
+
 
     ///// Get NUMBER of LINES /////
     while( fgets(readLine, sizeof(readLine), SourceCodeFile) ){
         if(readLine[0] == ':'){
-            dict->addToDictionary(readLine + 1, numberOfLines);
+            currentWord = strtok(readLine + 1, " ");
+            dict->addToDictionary(currentWord, numberOfLines);
 
         } else if(lineIsValid(readLine))
             numberOfLines ++;
@@ -310,7 +330,7 @@ bool Read(char* filename){
         code[line] = new char*[2];
 
         code[line][0] = new char[7]; //Operation
-        code[line][1] = new char[7]; //Operand
+        code[line][1] = new char[21]; //Operand
     }
 
 
@@ -329,7 +349,7 @@ bool Read(char* filename){
             if(currentWord[strlen(currentWord) - 1] == '\n')
                 currentWord[strlen(currentWord) - 1] = '\0';
 
-            if(currentWord == NULL or strlen(currentWord) >= 6)
+            if(currentWord == NULL or strlen(currentWord) >= 20)
                 return false;
             strcpy( code[line][1], currentWord );
 
@@ -339,10 +359,11 @@ bool Read(char* filename){
 
 
     ///// VERIFY the CODE /////
-    // cout << "\n\n";
-    // for(line = 0; line < numberOfLines; line ++){
-    //     cout << line << ": " << code[line][0] << "   " << code[line][1] << endl;
-    // }
+    cout << "\n\n";
+    for(line = 0; line < numberOfLines; line ++){
+        cout << line << ": " << code[line][0] << "   " << code[line][1] << endl;
+    }
+    dict->display();
 
 
     fclose(SourceCodeFile);
@@ -366,12 +387,13 @@ bool Run(){
     cout << "Running...";
     CurrentIndex = 0;
     int operand;
+    Node* p;
 
     while(true){
         if(debugMode)
             cout << "\n\nCurrent command: " << code[CurrentIndex][0] << " " << code[CurrentIndex][1];
 
-        if(!Valid(code[CurrentIndex][1])){ //The operand is not valid
+        if(!isJumper(code[CurrentIndex][0]) and !Valid(code[CurrentIndex][1])){ //The operand is not valid
             cout << "\nSyntax Error: " << code[CurrentIndex][1] << " is not a valid operand";
             return false;
         }
@@ -513,29 +535,70 @@ bool Run(){
             
 /////////////////////////////////////////////////////////////////////////////// JUMPERS
         else if( strcmp(code[CurrentIndex][0], "JMP") == 0 ){      // JMP
-            ;
+                p = dict->getNodeByPK( code[CurrentIndex][1] );
 
-            CurrentIndex ++;
+                if(p == NULL){
+                    cout << "\nNo such label (" << code[CurrentIndex][1] << ") exists!";
+                    return false;
+                }
+
+                CurrentIndex = p->value;
             
         } else if( strcmp(code[CurrentIndex][0], "JZ") == 0 ){     // JZ
-            ;
+            if(A == 0){
+                p = dict->getNodeByPK( code[CurrentIndex][1] );
 
-            CurrentIndex ++;
+                if(p == NULL){
+                    cout << "\nNo such label (" << code[CurrentIndex][1] << ") exists!";
+                    return false;
+                }
+
+                CurrentIndex = p->value;
+            } else {
+                CurrentIndex ++;
+            }
             
         } else if( strcmp(code[CurrentIndex][0], "JNZ") == 0 ){    // JNZ
-            ;
+            if(A != 0){
+                p = dict->getNodeByPK( code[CurrentIndex][1] );
 
-            CurrentIndex ++;
+                if(p == NULL){
+                    cout << "\nNo such label (" << code[CurrentIndex][1] << ") exists!";
+                    return false;
+                }
+
+                CurrentIndex = p->value;
+            } else {
+                CurrentIndex ++;
+            }
             
         } else if( strcmp(code[CurrentIndex][0], "JLZ") == 0 ){    // JLZ
-            ;
+            if(A < 0){
+                p = dict->getNodeByPK( code[CurrentIndex][1] );
 
-            CurrentIndex ++;
+                if(p == NULL){
+                    cout << "\nNo such label (" << code[CurrentIndex][1] << ") exists!";
+                    return false;
+                }
+
+                CurrentIndex = p->value;
+            } else {
+                CurrentIndex ++;
+            }
             
         } else if( strcmp(code[CurrentIndex][0], "JMZ") == 0 ){    // JMZ
-            ;
+            if(A > 0){
+                p = dict->getNodeByPK( code[CurrentIndex][1] );
 
-            CurrentIndex ++;
+                if(p == NULL){
+                    cout << "\nNo such label (" << code[CurrentIndex][1] << ") exists!";
+                    return false;
+                }
+
+                CurrentIndex = p->value;
+            } else {
+                CurrentIndex ++;
+            }
             
         } else if( strcmp(code[CurrentIndex][0], "JC") == 0 ){     // JC
             ;
@@ -577,6 +640,7 @@ bool Run(){
 /////////////////////////////////////////////////////////////////////////////// HALTING & ERRORS
         else if( strcmp(code[CurrentIndex][0], "HLT") == 0 ){      // HLT
             Display();
+            cout << "\nProcess ended with code: " << code[CurrentIndex][1];
             return true;
         }
 
